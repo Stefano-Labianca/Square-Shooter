@@ -3,7 +3,6 @@ extends KinematicBody2D
 signal player_killed
 
 const WEIGHT: float = 0.55
-const EXPLOSION_VOLUME: float = -6.5
 const HIT_VOLUME: float = -4.50
 
 var enemy_speed: int
@@ -40,14 +39,13 @@ func _follow_player(delta: float) -> void:
 
 func _on_Hitbox_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
-		if enemy_type == 3: # Verifico se il tipo di nemico è il 'bomber'
-			_show_explosion("bomber_explosion")
-			_play_explosion_sound("bomber_explosion")
+		if enemy_type == 3: # Check if the enemy is the 'bomber'
+			_instantiate_enemy_dead("bomber_explosion")
 
 		Global.play_dead_sound(body.position)
 
-		self.queue_free()
-		body.queue_free() # Uccidi il player
+		self.queue_free() # Enemy disappears
+		body.queue_free() # Kill the player
 		Global.player = null
 
 		_connect_player_killed_signal()
@@ -63,12 +61,10 @@ func _on_Hitbox_body_entered(body: Node) -> void:
 
 			if enemy_lives == 0:
 				if enemy_type == 3: # Check if the enemy is the 'bomber'
-					_show_explosion("bomber_explosion")
-					_play_explosion_sound("bomber_explosion")
+					_instantiate_enemy_dead("bomber_explosion")
 
 				if enemy_type == 4:  # Check if the enemy is the 'armored'
-					_show_explosion("armored_explosion")
-					_play_explosion_sound("armored_explosion")
+					_instantiate_enemy_dead("armored_explosion")
 
 				Global.score_node.callv("update_score", [enemy_score])
 				_show_score_feed()
@@ -79,26 +75,24 @@ func _on_Hitbox_body_entered(body: Node) -> void:
 			$Sprite.texture = Global.stun_texture
 
 
-# Show the explosion for the enemy type 'bomber' and 'armored'
-func _show_explosion(explosion_type: String) -> void:
+# Show the explosion for the enemy type 'bomber' or 'armored'
+func _get_explosion(explosion_type: String) -> Particles2D:
 	var ExplosionParticles = Global.explosion_type[explosion_type].particles
 	var explosion_particles_instance = ExplosionParticles.instance()
-
 	explosion_particles_instance.position = self.position
-	get_tree().get_root().call_deferred("add_child", explosion_particles_instance, true)
-	explosion_particles_instance.emitting = true
 
 
+	return explosion_particles_instance
 
-func _play_explosion_sound(explosion_type: String) -> void:
+
+func _get_explosion_sound(explosion_type: String) -> AudioStreamPlayer2D:
 	var explosion_audio = AudioStreamPlayer2D.new()
 
 	explosion_audio.stream = Global.explosion_type[explosion_type].sound
 	explosion_audio.position = self.position
-	explosion_audio.volume_db = EXPLOSION_VOLUME
+	explosion_audio.volume_db = Global.explosion_type[explosion_type].volume
 
-	get_tree().get_root().call_deferred("add_child", explosion_audio, true)
-	explosion_audio.play(0)
+	return explosion_audio
 
 
 func _play_hit_sound() -> void:
@@ -108,8 +102,23 @@ func _play_hit_sound() -> void:
 	hit_sound.position = self.position
 	hit_sound.volume_db = HIT_VOLUME
 
+	var timer: Timer = _create_hit_life_timer(hit_sound)
+	hit_sound.add_child(timer, true)
+
 	get_tree().get_root().call_deferred("add_child", hit_sound, true)
 	hit_sound.play(0)
+
+
+# Return a life timer, of 3 seconds, for the [audio] of the enemy's hit.
+# - [audio: AudioStreamPlayer2D] - The hit audio.
+func _create_hit_life_timer(audio: AudioStreamPlayer2D) -> Timer:
+	var life_timer: Timer = Timer.new()
+
+	life_timer.wait_time = 3
+	life_timer.autostart = true
+	life_timer.connect("timeout", Global, "_clean_sounds_on_timeout", [audio])
+
+	return life_timer
 
 
 func _show_score_feed() -> void:
@@ -124,6 +133,34 @@ func _show_score_feed() -> void:
 func _on_StunTimer_timeout() -> void:
 	is_stun = false
 	$Sprite.texture = enemy_sprite
+
+
+# Return a life timer, of 3 seconds, for the [audio] of the explosion.
+# - [audio: AudioStreamPlayer2D] - The explosion audio.
+# - [particle: Particles2D] - The visual effect of the explosion.
+func _create_explosion_life_timer(audio: AudioStreamPlayer2D) -> Timer:
+	var life_timer: Timer = Timer.new()
+
+	life_timer.wait_time = 3
+	life_timer.autostart = true
+	life_timer.connect("timeout", Global, "_clean_sounds_on_timeout", [audio])
+
+	return life_timer
+
+# Insert the explosion particle and the explosion sound of the enemy.
+# - [explosion_type: String] - The tyoe of the explosion to show in the scene.
+func _instantiate_enemy_dead(explosion_type: String) -> void:
+	var explosion_particle: Particles2D = _get_explosion(explosion_type)
+	var explosion_sound: AudioStreamPlayer2D = _get_explosion_sound(explosion_type)
+	var timer: Timer = _create_explosion_life_timer(explosion_sound)
+
+	get_tree().get_root().call_deferred("add_child", explosion_particle, true)
+	explosion_particle.emitting = true
+
+	get_tree().get_root().call_deferred("add_child", explosion_sound, true)
+	explosion_sound.play(0)
+
+	explosion_sound.add_child(timer, true)
 
 
 func _connect_player_killed_signal() -> void:

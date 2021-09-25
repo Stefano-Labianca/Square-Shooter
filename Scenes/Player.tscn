@@ -11,7 +11,7 @@ extents = Vector2( 13.7541, 13.329 )
 script = ExtResource( 2 )
 
 [node name="Muzzle" type="Position2D" parent="."]
-position = Vector2( 29.0627, 0 )
+position = Vector2( 29, 0 )
 
 [node name="Sprite" type="Sprite" parent="."]
 scale = Vector2( 1.5, 1.5 )

@@ -5,8 +5,8 @@ const GAME_SCENE_PATH: String = "res://World.tscn"
 const LOGIN_SCENE_PATH: String = "res://World.tscn"
 const DIRECTORY_SAVE_FILE: String = "user://save/"
 const SAVE_FILE_PATH: String = DIRECTORY_SAVE_FILE + "save_game.dat"
-const DEAD_VOLUME: float = -5.5
-const CLICK_VOLUME: float = -4.0
+const DEAD_VOLUME: float = -13.75
+const CLICK_VOLUME: float = -7.0
 
 var score_label: Label = null
 var score_node = null
@@ -60,12 +60,14 @@ var enemy_dict: Dictionary = {
 var explosion_type: Dictionary = {
 	"bomber_explosion": {
 		"particles": preload("res://particles/Explosion.tscn"),
-		"sound": load("res://assets/audio/sounds/bomb.wav")
+		"sound": load("res://assets/audio/sounds/bomb.wav"),
+		"volume": -7.5
 	},
 
 	"armored_explosion": {
 		"particles": preload("res://particles/ExplosionBot.tscn"),
-		"sound": load("res://assets/audio/sounds/bomb_bot.wav")
+		"sound": load("res://assets/audio/sounds/bomb_bot.wav"),
+		"volume": -15.5
 	}
 }
 
@@ -92,5 +94,10 @@ func create_click_sound(button_position: Vector2) -> void:
 	click.play(0)
 
 
-func _on_player_killed():
-	print("Morto")
+func _clean_particles_and_sounds_on_timeout(audio: AudioStreamPlayer2D, particle: Particles2D) -> void:
+	audio.queue_free()
+	particle.queue_free()
+
+
+func _clean_sounds_on_timeout(audio: AudioStreamPlayer2D) -> void:
+	audio.queue_free()

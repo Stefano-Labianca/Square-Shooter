@@ -19,7 +19,7 @@ func _physics_process(_delta: float) -> void:
 	_player_movement()
 
 
-# MOve the player
+# Move the player
 func _player_movement() -> void:
 	var motion: Vector2 = Vector2()
 
@@ -51,26 +51,29 @@ func _player_movement() -> void:
 
 # Give the possibility to shoot a bullet
 func _fire() -> void:
+	var bullet: RigidBody2D = _create_bullet()
+	var spark: Particles2D = _create_spark()
+	var audio: AudioStreamPlayer2D = _create_shoot_audio()
+	var life_timer: Timer = _create_spark_life_timer(audio, spark)
+
+	get_tree().get_root().call_deferred("add_child", bullet, true)
+	get_tree().get_root().call_deferred("add_child", spark, true)
+	spark.emitting = true
+
+	get_tree().get_root().call_deferred("add_child", audio, true)
+	audio.play(0)
+	audio.add_child(life_timer, true)
+
+
+# Return an instance of the player's bullet.
+func _create_bullet() -> RigidBody2D:
 	var bullet_instance: RigidBody2D = Bullet.instance()
 
-	# Creazione proiettile
 	bullet_instance.position = $Muzzle.get_global_position()
 	bullet_instance.rotation_degrees = self.rotation_degrees
 	bullet_instance.apply_impulse(Vector2(), Vector2(bullet_instance.bullet_speed, 0).rotated(self.rotation))
 
-	var spark: Particles2D = _create_spark()
-	var audio: AudioStreamPlayer2D = _create_shoot_audio()
-
-	# Inserisco il proiettile nella scena
-	get_tree().get_root().call_deferred("add_child", bullet_instance, true)
-
-	# Inserisco le particelle nella scena
-	get_tree().get_root().call_deferred("add_child", spark, true)
-	spark.emitting = true
-
-	# Inserisco l'audio della particella dello sparo nella scena
-	get_tree().get_root().call_deferred("add_child", audio, true)
-	audio.play(0)
+	return bullet_instance
 
 
 func _create_spark() -> Particles2D:
@@ -89,10 +92,24 @@ func _create_shoot_audio():
 	shoot_audio.stream = load("res://assets/audio/sounds/player_shoot.wav")
 	shoot_audio.volume_db = GUN_VOLUME
 	shoot_audio.position = $Muzzle.get_global_position()
+	shoot_audio.name = "ShootAudio"
 
 	return shoot_audio
 
 
-# Reloadin timeout
+# Reloading timeout
 func _on_Reload_timeout() -> void:
 	can_shoot = true
+
+
+# Return a life timer, of 3 seconds, for the [spark] and for the [audio] of the gun.
+# - [audio: AudioStreamPlayer2D] - The shoot audio.
+# - [spark: Particles2D] - The visual effect of the shoot.
+func _create_spark_life_timer(audio: AudioStreamPlayer2D, spark: Particles2D) -> Timer:
+	var life_timer: Timer = Timer.new()
+
+	life_timer.wait_time = 3
+	life_timer.autostart = true
+	life_timer.connect("timeout", Global, "_clean_particles_and_sounds_on_timeout", [audio, spark])
+
+	return life_timer
