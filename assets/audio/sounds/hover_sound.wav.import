@@ -1,0 +1,21 @@
+[remap]
+
+importer="wav"
+type="AudioStreamSample"
+path="res://.import/hover_sound.wav-5f09eb853fcc1698ae1e95383cf9e40d.sample"
+
+[deps]
+
+source_file="res://assets/audio/sounds/hover_sound.wav"
+dest_files=[ "res://.import/hover_sound.wav-5f09eb853fcc1698ae1e95383cf9e40d.sample" ]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop=false
+compress/mode=0

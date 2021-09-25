@@ -1,0 +1,98 @@
+[gd_scene load_steps=8 format=2]
+
+[ext_resource path="res://Scripts/clear_blast.gd" type="Script" id=1]
+[ext_resource path="res://sprites/shock_wave.png" type="Texture" id=2]
+
+[sub_resource type="Gradient" id=1]
+offsets = PoolRealArray( 0, 0.164384, 0.436399, 0.708415, 0.992172 )
+colors = PoolColorArray( 1, 1, 1, 1, 0.949219, 0.935372, 0.0630341, 1, 0.957031, 0.522792, 0.0149536, 1, 0.886719, 0.152838, 0.0554199, 1, 0.128906, 0.123367, 0.123367, 1 )
+
+[sub_resource type="GradientTexture" id=2]
+gradient = SubResource( 1 )
+
+[sub_resource type="ParticlesMaterial" id=3]
+emission_shape = 1
+emission_sphere_radius = 8.11
+flag_disable_z = true
+direction = Vector3( 0, 0, 0 )
+spread = 180.0
+gravity = Vector3( 0, 0, 0 )
+initial_velocity = 420.66
+initial_velocity_random = 0.78
+angular_velocity = 94.85
+orbit_velocity = 0.0
+orbit_velocity_random = 0.0
+scale = 10.0
+scale_random = 1.0
+color_ramp = SubResource( 2 )
+
+[sub_resource type="CircleShape2D" id=4]
+radius = 15.0
+
+[sub_resource type="Animation" id=5]
+resource_name = "expand"
+length = 0.5
+tracks/0/type = "value"
+tracks/0/path = NodePath(".:scale")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.196146, 0.196 ),
+"update": 0,
+"values": [ Vector2( 0.1, 0.1 ), Vector2( 7.5, 7.5 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath(".:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.4, 0.5 ),
+"transitions": PoolRealArray( 1, 1, 1 ),
+"update": 0,
+"values": [ Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 1 ), Color( 1, 1, 1, 0 ) ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("../Blast:scale")
+tracks/2/interp = 2
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 0.5 ),
+"transitions": PoolRealArray( 0.196, 0.196 ),
+"update": 0,
+"values": [ Vector2( 0.1, 0.1 ), Vector2( 1, 1 ) ]
+}
+
+[node name="Explosion" type="Particles2D"]
+z_index = -1
+emitting = false
+amount = 150
+lifetime = 0.31
+one_shot = true
+explosiveness = 0.72
+local_coords = false
+process_material = SubResource( 3 )
+script = ExtResource( 1 )
+
+[node name="Blast" type="Area2D" parent="."]
+scale = Vector2( 0.1, 0.1 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Blast"]
+scale = Vector2( 7.5, 7.5 )
+shape = SubResource( 4 )
+
+[node name="shock_wave" type="Sprite" parent="."]
+scale = Vector2( 0.1, 0.1 )
+texture = ExtResource( 2 )
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="shock_wave"]
+anims/expand = SubResource( 5 )
+
+[connection signal="body_entered" from="Blast" to="." method="_on_Blast_body_entered"]
+[connection signal="animation_finished" from="shock_wave/AnimationPlayer" to="." method="_on_AnimationPlayer_animation_finished"]

@@ -1,0 +1,57 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Scenes/GUI/Loading.tscn" type="PackedScene" id=2]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Node
+
+onready var LoginNode = preload(\"res://Scenes/GUI/Login.tscn\")
+
+var auth_request: HTTPRequest = HTTPRequest.new()
+var update_table: HTTPRequest = HTTPRequest.new()
+
+
+func _ready() -> void:
+	var file = File.new()
+
+	if not file.file_exists(Global.SAVE_FILE_PATH):
+		var login_node = LoginNode.instance()
+		self.call_deferred(\"add_child\", login_node, true)
+		$Loading.queue_free()
+	else:
+		self.add_child(auth_request, true)
+		auth_request.connect(\"request_completed\", self, \"_on_auth_request_completed\")
+		_read_data()
+
+
+# Legge i dati contenuti nel file.
+func _read_data() -> void:
+	var file: File = File.new()
+	if file.open(Global.SAVE_FILE_PATH, File.READ) == OK:
+		var data: Dictionary = file.get_var()
+		Online.user_email = data.email
+		auth_request.request(Online.AUTH, Online.HEADERS, true, HTTPClient.METHOD_POST, JSON.print({\"jwt\": data.token})) # Invio token da autenticare
+
+
+# Viene chiamata qunado la rihiesta di autenticazione è avvenuto con successo
+func _on_auth_request_completed(_result, _response_code, _headers, body: PoolByteArray) -> void:
+	var response = parse_json(body.get_string_from_utf8())
+	var file: File = File.new()
+
+	if response.risultato == \"ACCESSO CONSENTITO!\":
+		_start()
+	else:
+		$NinePatchRect/VBoxContainer/Error.text = \"Autenticazione fallita\"
+	file.close()
+
+
+# Fa iniziare la partita
+func _start() -> void:
+	$Loading.call(\"stop_anim\")
+	get_tree().change_scene(\"res://Scenes/GUI/MainGUI.tscn\")
+"
+
+[node name="Game" type="Node"]
+script = SubResource( 1 )
+
+[node name="Loading" parent="." instance=ExtResource( 2 )]
