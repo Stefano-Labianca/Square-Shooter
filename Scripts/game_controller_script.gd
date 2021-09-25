@@ -19,10 +19,7 @@ func _restart_game() -> void:
 	score_label_node.text = "SCORE: 0"
 
 	Global.dead_node.visible = false
-	enemies = get_tree().get_nodes_in_group("enemy")
-
-	for enemy in enemies:
-		enemy.queue_free()
+	_clean_scene_from_enemy()
 
 	self.add_child(player_node, true)
 
@@ -30,4 +27,11 @@ func _restart_game() -> void:
 func _on_player_killed() -> void:
 	$EnemySpawner/SpawnTimer.stop()
 	Global.dead_node.visible = true
+
+
+func _clean_scene_from_enemy() -> void:
+	enemies = get_tree().get_nodes_in_group("enemy")
+
+	for enemy in enemies:
+		enemy.queue_free()
 
