@@ -71,6 +71,6 @@ margin_top = 396.0
 margin_right = 1280.0
 margin_bottom = 439.0
 custom_fonts/font = SubResource( 4 )
-text = "Premi 'Spazio' per ricominciare"
+text = "Press 'Space' to restart"
 align = 1
 valign = 1
